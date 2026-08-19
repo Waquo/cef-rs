@@ -50,6 +50,8 @@ $env:CEF_PATH="$env:USERPROFILE/.local/share/cef"
 $env:PATH="$env:PATH;$env:CEF_PATH"
 ```
 
+On Windows, the CEF wrapper uses the static MSVC runtime (`/MT`) by default. Set `CEF_MSVC_RUNTIME_LIBRARY` to `MultiThreaded` for `/MT` or `MultiThreadedDLL` for `/MD`; an unset or empty value defaults to `MultiThreaded`.
+
 ### Run the `cefsimple` Example
 
 This command should work with each platform:

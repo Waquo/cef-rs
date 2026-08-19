@@ -13,6 +13,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("cargo::rerun-if-env-changed=FLATPAK");
     println!("cargo::rerun-if-env-changed=CEF_PATH");
+    println!("cargo::rerun-if-env-changed=CEF_MSVC_RUNTIME_LIBRARY");
     let package_version = env::var("CARGO_PKG_VERSION")?;
     let cef_version = download_cef::default_version(&package_version);
 
@@ -168,8 +169,17 @@ fn main() -> anyhow::Result<()> {
             ]
             .join(" ");
 
+            let msvc_runtime_library = match env::var("CEF_MSVC_RUNTIME_LIBRARY") {
+                Ok(value) if value.is_empty() => "MultiThreaded".to_owned(),
+                Ok(value) if value == "MultiThreaded" || value == "MultiThreadedDLL" => value,
+                Ok(value) => anyhow::bail!(
+                    "CEF_MSVC_RUNTIME_LIBRARY must be either MultiThreaded or MultiThreadedDLL, got {value:?}",
+                ),
+                Err(env::VarError::NotPresent) => "MultiThreaded".to_owned(),
+                Err(error) => return Err(error.into()),
+            };
             let build_dir = cef_dll_wrapper
-                .define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded")
+                .define("CMAKE_MSVC_RUNTIME_LIBRARY", msvc_runtime_library)
                 .define("CMAKE_OBJECT_PATH_MAX", "500")
                 .define("CMAKE_STATIC_LINKER_FLAGS", &sdk_libs)
                 .define("PROJECT_ARCH", project_arch)
